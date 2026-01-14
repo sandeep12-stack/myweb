@@ -33,6 +33,19 @@ app.get("/", async (req, res) => {
   res.send("Backend running");
 });
 
+
+// GET all contacts (for testing)
+app.get("/api/contact", async (req, res) => {
+  try {
+    await connectDB();
+    const contacts = await Contact.find().sort({ createdAt: -1 });
+    res.json(contacts);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch contacts" });
+  }
+});
+
+
 // CONTACT API
 app.post("/api/contact", async (req, res) => {
   try {

@@ -7,18 +7,39 @@ const Contact = require("./models/Contact");
 
 const app = express();
 
-// middleware
 app.use(cors());
 app.use(express.json());
 
+// MongoDB connection cache
+let cached = global.mongoose;
+
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
+}
+
+async function connectDB() {
+  if (cached.conn) return cached.conn;
+
+  if (!cached.promise) {
+    cached.promise = mongoose.connect(process.env.MONGO_URI, {
+      bufferCommands: false,
+    });
+  }
+
+  cached.conn = await cached.promise;
+  return cached.conn;
+}
+
 // test route
-app.get("/", (req, res) => {
+app.get("/", async (req, res) => {
+  await connectDB();
   res.send("Backend running");
 });
 
 // CONTACT API
 app.post("/api/contact", async (req, res) => {
   try {
+    await connectDB();
     const newContact = new Contact(req.body);
     await newContact.save();
     res.status(201).json({ message: "Message saved" });
@@ -28,21 +49,5 @@ app.post("/api/contact", async (req, res) => {
   }
 });
 
-/* -------------------- */
-/* MongoDB connection  */
-/* -------------------- */
-
-let isConnected = false;
-
-async function connectDB() {
-  if (isConnected) return;
-
-  await mongoose.connect(process.env.MONGO_URI);
-  isConnected = true;
-  console.log("MongoDB connected");
-}
-
-connectDB();
-
-/* 🚨 IMPORTANT FOR VERCEL */
+// 🚨 VERCEL EXPORT
 module.exports = app;

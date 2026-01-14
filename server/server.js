@@ -3,16 +3,15 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 require("dotenv").config();
 
-const Contact = require("./models/Contact");
+const Contact = require("./model"); // ✅ FIXED PATH
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-// MongoDB connection cache
+// MongoDB connection cache (REQUIRED FOR VERCEL)
 let cached = global.mongoose;
-
 if (!cached) {
   cached = global.mongoose = { conn: null, promise: null };
 }
@@ -21,9 +20,7 @@ async function connectDB() {
   if (cached.conn) return cached.conn;
 
   if (!cached.promise) {
-    cached.promise = mongoose.connect(process.env.MONGO_URI, {
-      bufferCommands: false,
-    });
+    cached.promise = mongoose.connect(process.env.MONGO_URI);
   }
 
   cached.conn = await cached.promise;
@@ -49,5 +46,5 @@ app.post("/api/contact", async (req, res) => {
   }
 });
 
-// 🚨 VERCEL EXPORT
+// 🚨 REQUIRED FOR VERCEL
 module.exports = app;

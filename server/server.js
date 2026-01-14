@@ -23,17 +23,26 @@ app.post("/api/contact", async (req, res) => {
     await newContact.save();
     res.status(201).json({ message: "Message saved" });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: "Error saving message" });
   }
 });
 
-// DB connect
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log("MongoDB connected");
-    app.listen(5000, () => {
-      console.log("Server running on port 5000");
-    });
-  })
-  .catch((err) => console.log(err));
+/* -------------------- */
+/* MongoDB connection  */
+/* -------------------- */
+
+let isConnected = false;
+
+async function connectDB() {
+  if (isConnected) return;
+
+  await mongoose.connect(process.env.MONGO_URI);
+  isConnected = true;
+  console.log("MongoDB connected");
+}
+
+connectDB();
+
+/* 🚨 IMPORTANT FOR VERCEL */
+module.exports = app;
